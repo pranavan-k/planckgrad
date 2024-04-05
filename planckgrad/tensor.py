@@ -3,6 +3,7 @@ import numpy as np
 class Tensor:
     def __init__(self, array):
         self.data = np.array(array)
+        self.grad = None
     
     @property
     def dtype(self): return self.data.dtype
@@ -80,6 +81,9 @@ class Tensor:
     
     def reshape(self, *shape):
         return Tensor(self.data.reshape(*shape))
+    
+    def backward():
+        pass
     
     @property
     def T(self): return Tensor(self.data.T)

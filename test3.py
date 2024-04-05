@@ -24,8 +24,8 @@ ax.set(xlabel='x',
 fc1 = nn.Linear(2, 2, bias=False)
 fc2 = nn.Linear(2, 1)
 
-lr = 1e-5
-epochs = 100
+lr = 1e-4
+epochs = 110
 loss_fn = nn.MSELoss()
 
 def train(epochs, lr, loss_fn):
@@ -42,9 +42,9 @@ def train(epochs, lr, loss_fn):
             epoch_loss += loss.item()
 
             # backprop
-            fc2.weights = fc2.weights - lr * out1.T * 2*(out2 - true)
+            fc2.weights = fc2.weights - lr * out1.T * (out2 - true)
             fc2.bias = fc2.bias - lr * 2*(out2 - true)
-            fc1.weights = fc1.weights - lr * fc1.weights.T @ out1.T * 2*(out2 - true)
+            fc1.weights = fc1.weights - lr * fc1.weights.T @ out1.T * (out2 - true)
     
         if e % 9 == 0:
             print(f"epoch: {e}, loss: {epoch_loss / len(X)}")
