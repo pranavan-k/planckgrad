@@ -1,3 +1,7 @@
+"""
+This test is old. Uses numpy ndarray, instead of planckgrad tensor. Also uses manual backpropagration
+"""
+
 import planckgrad.nn as nn
 import numpy as np
 import torch

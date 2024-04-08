@@ -1,13 +1,32 @@
 import numpy as np
 import planckgrad as pl
 from planckgrad.tensor import Tensor
+import inspect
+from planckgrad.nn.parameter import Parameter
 
-class Linear:
+class Module:
+    def parameters(self):
+        for name, value in inspect.getmembers(self):
+            if isinstance(value, Parameter):
+                yield value
+            elif isinstance(value, Module): # allows for nested modules
+                yield from value.parameters()
+    
+    def forward(self, x):
+        pass
+
+    def __call__(self, x):
+        return self.forward(x)
+
+# layers
+
+class Linear(Module):
     def __init__(self, in_features: int, out_features: int, bias=True):
+        super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.weights = Tensor.rand(in_features, out_features)
-        self.bias = Tensor.randn(out_features) if bias else None
+        self.weights = Parameter(in_features, out_features)
+        self.bias = Parameter(out_features) if bias else None
 
     def __call__(self, x: Tensor) -> Tensor:
         if self.bias is None:
@@ -15,6 +34,7 @@ class Linear:
 
         return x @ self.weights + self.bias
 
+# loss functions
 
 class MSELoss:
     def __init__(self, reduction="mean"):
@@ -24,11 +44,17 @@ class MSELoss:
         self.y_pred = y_pred
         self.y_true = y_true
         self.n = y_pred.shape[0]
+        self.item()
 
         return self
 
     def item(self):
         if self.reduction == "mean":
-            return pl.mean((self.y_pred - self.y_true) ** 2)
+            self.result = pl.mean((self.y_pred - self.y_true) ** 2)
+            return self.result
         elif self.reduction == "sum":
-            return pl.sum((self.y_pred - self.y_true) ** 2)
+            self.result = pl.sum((self.y_pred - self.y_true) ** 2)
+            return self.result()
+    
+    def backward(self):
+        self.result.backward()
