@@ -166,6 +166,48 @@ class Tensor:
 
         return Tensor(data, requires_grad, dependency_list)
 
+    def div(self, other):
+        data = self.data / other.data
+        requires_grad = self.requires_grad or other.requires_grad
+
+        dependency_list = []
+
+        if self.requires_grad:
+            def grad_fn1(grad):
+                grad = Tensor(grad.data / other.data)
+
+                ndim_added = grad.ndim - self.ndim
+
+                for _ in range(ndim_added):
+                    grad.data = grad.data.sum(axis=0)
+
+                # Sum across broadcasted (but non-added dims)
+                for i, dim in enumerate(self.shape):
+                    if dim == 1:
+                        grad.data = grad.data.sum(axis=i, keepdims=True)
+
+                return grad
+
+            dependency_list.append(Dependency(self, grad_fn1))
+        
+        if other.requires_grad:
+            def grad_fn2(grad):
+                grad = Tensor(-self.data / other.data ** 2)
+
+                ndim_added = grad.ndim - other.ndim
+
+                for _ in range(ndim_added):
+                    grad.data = grad.data.sum(axis=0)
+                
+                for i, dim in enumerate(other.shape):
+                    if dim == 1:
+                        grad.data = grad.data.sum(axis=i, keepdims=True)
+
+                return grad
+
+            dependency_list.append(Dependency(other, grad_fn2))
+
+        return Tensor(data, requires_grad, dependency_list)
     
     def __add__(self, other):
         if isinstance(other, Tensor):
@@ -225,15 +267,15 @@ class Tensor:
     def __rmul__(self, other):
       return self.__mul__(other)
     
-    def __div__(self, other):
+    def __truediv__(self, other):
         if isinstance(other, Tensor):
-            return Tensor(self.data / other.data)
+            return self.div(other)
         elif isinstance(other, int) or isinstance(other, float):
             return Tensor(self.data / other)
         else:
             raise TypeError("Unsupported operand type(s) for /")
 
-    def __rdiv__(self, other):
+    def __rtruediv__(self, other):
       return self.__div__(other)
     
     def __pow__(self, other):

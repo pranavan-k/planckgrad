@@ -3,6 +3,7 @@ import planckgrad as pl
 from planckgrad.tensor import Tensor
 import inspect
 from planckgrad.nn.parameter import Parameter
+import planckgrad.nn.functional
 
 class Module:
     def parameters(self):
@@ -33,6 +34,16 @@ class Linear(Module):
             return x @ self.weights
 
         return x @ self.weights + self.bias
+
+# activation layers
+
+class Sigmoid(Module):
+    def __init__(self):
+        super().__init__()
+    
+    def __call__(self, x: Tensor) -> Tensor:
+        data = 1 / (1 + np.exp(-x.data))
+        return Parameter(None, data=data)
 
 # loss functions
 
